@@ -1,122 +1,71 @@
--- CAVEIRA HUB V8 - ENTRA, ROUBA E VOLTA SOZINHO 🤡 [GOD]
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/GRPGaming/Key-System/refs/heads/Xycer-Hub-Source/source"))()
-local Window = OrionLib:MakeWindow({Name = "CAVEIRA V8 - AUTO TUDO 🤡", HidePremium = false, SaveConfig = true, ConfigFolder = "CaveiraV8"})
-
+-- CAVEIRA V9 - DELTA GOD FIX 🤡
 local LP = game.Players.LocalPlayer
-local RS = game:GetService("ReplicatedStorage")
+print("CAVEIRA INICIADO...")
 
-function GetBest()
-    local best, val = nil, 0
-    for _,plot in pairs(workspace.Plots:GetChildren()) do
-        if plot:FindFirstChild("Owner") and plot.Owner.Value ~= LP.Name then
-            for _,clown in pairs(plot:GetChildren()) do
-                if clown:FindFirstChild("PricePerSecond") and clown:FindFirstChild("PrimaryPart") then
-                    if clown.PricePerSecond.Value > val then
-                        val = clown.PricePerSecond.Value
-                        best = clown
+-- acha o remote de trancar sozinho
+local LockRemote = nil
+for _,v in pairs(game:GetDescendants()) do
+    if v.Name:lower():find("lock") then
+        LockRemote = v
+        print("Lock achado:", v:GetFullName())
+    end
+end
+
+while true do
+    task.wait(0.4)
+    pcall(function()
+        -- noclip pra entrar na base trancada
+        for _,part in pairs(LP.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+
+        -- verifica se ta segurando algo
+        local segurando = false
+        if LP.Character:FindFirstChildWhichIsA("Tool") then segurando = true end
+        for _,m in pairs(LP.Character:GetChildren()) do
+            if m:IsA("Model") and m:FindFirstChild("PricePerSecond") then segurando = true end
+        end
+
+        if segurando then
+            -- VOLTA PRA TUA BASE
+            for _,plot in pairs(workspace.Plots:GetChildren()) do
+                if plot:FindFirstChild("Owner") and plot.Owner.Value == LP.Name then
+                    LP.Character.HumanoidRootPart.CFrame = plot:GetPivot() + Vector3.new(0,8,0)
+                    print("Voltando pra base!")
+                end
+            end
+        else
+            -- PROCURA O MELHOR DE 100K+
+            local best, bestVal = nil, 0
+            for _,plot in pairs(workspace.Plots:GetChildren()) do
+                if plot:FindFirstChild("Owner") and plot.Owner.Value ~= LP.Name then
+                    for _,clown in pairs(plot:GetChildren()) do
+                        if clown:FindFirstChild("PricePerSecond") then
+                            local val = clown.PricePerSecond.Value
+                            if val >= 100000 and val > bestVal then
+                                bestVal = val
+                                best = clown
+                            end
+                        end
+                    end
+                end
+            end
+            
+            if best then
+                print("Indo roubar:", best.Name, bestVal)
+                LP.Character.HumanoidRootPart.CFrame = best.PrimaryPart.CFrame + Vector3.new(0,3,0)
+                task.wait(0.3)
+                for _,obj in pairs(best:GetDescendants()) do
+                    if obj:IsA("ProximityPrompt") then
+                        obj.MaxActivationDistance = 100
+                        obj.HoldDuration = 0
+                        fireproximityprompt(obj)
+                        print("Roubando!")
                     end
                 end
             end
         end
-    end
-    return best, val
+        
+        if LockRemote then LockRemote:FireServer() end
+    end)
 end
-
-function GetMyPlot()
-    for _,plot in pairs(workspace.Plots:GetChildren()) do
-        if plot:FindFirstChild("Owner") and plot.Owner.Value == LP.Name then return plot end
-    end
-    return nil
-end
-
-function HasClown()
-    if LP.Character:FindFirstChildWhichIsA("Tool") then return true end
-    for _,v in pairs(LP.Character:GetChildren()) do if v:IsA("Model") and v:FindFirstChild("PricePerSecond") then return true end end
-    return false
-end
-
-function NoclipOn()
-    for _,v in pairs(LP.Character:GetDescendants()) do
-        if v:IsA("BasePart") then v.CanCollide = false end
-    end
-end
-
-local Tab = Window:MakeTab({Name = "Auto Tudo", Icon = "rbxassetid://4483345998", PremiumOnly = false})
-
-Tab:AddSection({Name = "Entra > Rouba > Volta"})
-
-Tab:AddToggle({
-    Name = "AUTO: Entrar na Base, Roubar e Voltar [100K+]",
-    Default = false,
-    Callback = function(v)
-        _G.AutoTudo = v
-        while _G.AutoTudo do
-            task.wait(0.2)
-            pcall(function()
-                NoclipOn()
-                
-                -- 1. SE TÁ SEGURANDO, VOLTA PRA BASE
-                if HasClown() then
-                    local my = GetMyPlot()
-                    if my then
-                        NoclipOn()
-                        LP.Character.HumanoidRootPart.CFrame = my:GetPivot() + Vector3.new(0,5,0)
-                        task.wait(1.5)
-                    end
-                else
-                    -- 2. SE NÃO TÁ, VAI ROUBAR O MELHOR
-                    local best, val = GetBest()
-                    if best and val >= 100000 then
-                        NoclipOn()
-                        -- entra na base do cara mesmo trancada
-                        LP.Character.HumanoidRootPart.CFrame = best.PrimaryPart.CFrame + Vector3.new(0,3,0)
-                        task.wait(0.2)
-                        local prompt = best:FindFirstChildWhichIsA("ProximityPrompt", true)
-                        if prompt then
-                            prompt.MaxActivationDistance = 50
-                            fireproximityprompt(prompt)
-                        end
-                    end
-                end
-                
-                -- sempre tranca a tua
-                RS.Remotes.LockBase:FireServer()
-            end)
-        end
-    end
-})
-
-Tab:AddToggle({
-    Name = "Auto Roubar MELHOR do Server (ignora valor)",
-    Default = false,
-    Callback = function(v)
-        _G.BestOnly = v
-        while _G.BestOnly do
-            task.wait(0.2)
-            pcall(function()
-                NoclipOn()
-                if HasClown() then
-                    local my = GetMyPlot()
-                    if my then LP.Character.HumanoidRootPart.CFrame = my:GetPivot() + Vector3.new(0,5,0) end
-                else
-                    local best, val = GetBest()
-                    if best then
-                        LP.Character.HumanoidRootPart.CFrame = best.PrimaryPart.CFrame + Vector3.new(0,3,0)
-                        task.wait(0.2)
-                        fireproximityprompt(best:FindFirstChildWhichIsA("ProximityPrompt", true))
-                    end
-                end
-            end)
-        end
-    end
-})
-
-Tab:AddSlider({Name = "Minimo pra roubar", Min = 50000, Max = 1000000, Default = 100000, Increment = 50000, ValueName = "/s", Callback = function(v) _G.MinCustom = v end})
-
-Tab:AddButton({Name = "Ver Melhor Atual", Callback = function()
-    local b,v = GetBest()
-    if b then OrionLib:MakeNotification({Name = "MELHOR", Content = b.Name.." - "..v.."/s", Time = 4}) end
-end})
-
-OrionLib:Init()
-OrionLib:MakeNotification({Name = "CAVEIRA V8", Content = "Ativa o primeiro toggle! Entra, rouba e volta sozinho 🤡", Time = 5})
