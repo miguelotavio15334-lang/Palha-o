@@ -1,71 +1,66 @@
--- CAVEIRA V9 - DELTA GOD FIX 🤡
+-- CAVEIRA V10 DO ZERO - AUTO VAR 100K A 500M 🤡
 local LP = game.Players.LocalPlayer
-print("CAVEIRA INICIADO...")
+local Min = 100000 -- 100K
+local Max = 500000000 -- 500M
 
--- acha o remote de trancar sozinho
-local LockRemote = nil
-for _,v in pairs(game:GetDescendants()) do
-    if v.Name:lower():find("lock") then
-        LockRemote = v
-        print("Lock achado:", v:GetFullName())
+print("CAVEIRA V10 ATIVADO - 100K A 500M")
+
+-- Função pra ver se tá segurando palhaço
+function Segurando()
+    if LP.Character:FindFirstChildWhichIsA("Tool") then return true end
+    for _,v in pairs(LP.Character:GetChildren()) do
+        if v:IsA("Model") and v:FindFirstChild("PricePerSecond") then return true end
     end
+    return false
 end
 
+-- Loop infinito
 while true do
-    task.wait(0.4)
+    task.wait(0.3)
     pcall(function()
-        -- noclip pra entrar na base trancada
-        for _,part in pairs(LP.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+        -- NOCLIP pra entrar na base trancada
+        for _,p in pairs(LP.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
         end
 
-        -- verifica se ta segurando algo
-        local segurando = false
-        if LP.Character:FindFirstChildWhichIsA("Tool") then segurando = true end
-        for _,m in pairs(LP.Character:GetChildren()) do
-            if m:IsA("Model") and m:FindFirstChild("PricePerSecond") then segurando = true end
-        end
-
-        if segurando then
-            -- VOLTA PRA TUA BASE
+        if Segurando() then
+            -- AUTOVAR: TEM PALHAÇO NA MÃO = VOLTA PRA BASE
             for _,plot in pairs(workspace.Plots:GetChildren()) do
                 if plot:FindFirstChild("Owner") and plot.Owner.Value == LP.Name then
-                    LP.Character.HumanoidRootPart.CFrame = plot:GetPivot() + Vector3.new(0,8,0)
-                    print("Voltando pra base!")
+                    LP.Character.HumanoidRootPart.CFrame = plot:GetPivot() + Vector3.new(0,7,0)
                 end
             end
         else
-            -- PROCURA O MELHOR DE 100K+
-            local best, bestVal = nil, 0
+            -- PROCURA MELHOR PALHAÇO ENTRE 100K E 500M
+            local melhor, valorMelhor = nil, 0
+            
             for _,plot in pairs(workspace.Plots:GetChildren()) do
                 if plot:FindFirstChild("Owner") and plot.Owner.Value ~= LP.Name then
                     for _,clown in pairs(plot:GetChildren()) do
-                        if clown:FindFirstChild("PricePerSecond") then
+                        if clown:FindFirstChild("PricePerSecond") and clown:FindFirstChild("PrimaryPart") then
                             local val = clown.PricePerSecond.Value
-                            if val >= 100000 and val > bestVal then
-                                bestVal = val
-                                best = clown
+                            -- SÓ DE 100K A 500M
+                            if val >= Min and val <= Max and val > valorMelhor then
+                                valorMelhor = val
+                                melhor = clown
                             end
                         end
                     end
                 end
             end
-            
-            if best then
-                print("Indo roubar:", best.Name, bestVal)
-                LP.Character.HumanoidRootPart.CFrame = best.PrimaryPart.CFrame + Vector3.new(0,3,0)
-                task.wait(0.3)
-                for _,obj in pairs(best:GetDescendants()) do
+
+            if melhor then
+                -- VAI ATÉ ELE E ROUBA
+                LP.Character.HumanoidRootPart.CFrame = melhor.PrimaryPart.CFrame + Vector3.new(0,3,0)
+                task.wait(0.25)
+                for _,obj in pairs(melhor:GetDescendants()) do
                     if obj:IsA("ProximityPrompt") then
                         obj.MaxActivationDistance = 100
                         obj.HoldDuration = 0
                         fireproximityprompt(obj)
-                        print("Roubando!")
                     end
                 end
             end
         end
-        
-        if LockRemote then LockRemote:FireServer() end
     end)
 end
